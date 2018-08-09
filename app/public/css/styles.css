@@ -732,7 +732,7 @@ div.box.box-auto {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(248, 249, 250, 0.85);
+  background-color: rgba(248, 249, 250, 0.60);
   z-index: 2;
   display: flex;
   flex-direction: column;
@@ -1380,4 +1380,7 @@ div.box.box-auto {
 }
 .strong {
   font-weight: bold;
+}
+.text-center {
+  text-align: center;
 }

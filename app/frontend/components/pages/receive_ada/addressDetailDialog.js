@@ -14,7 +14,7 @@ const AddressDetailDialog = connect(
   }),
   actions
 )(
-  ({showDetail, showVerification, error, closeAddressDetail}) =>
+  ({showDetail, showVerification, error, verifyAddress, closeAddressDetail}) =>
     showDetail &&
     h(
       'div',
@@ -61,9 +61,9 @@ const AddressDetailDialog = connect(
                 h('span', {class: 'full-address'}, showDetail.bip32path)
               ),
               h(
-                'b',
-                undefined,
-                'Verify that the address and derivation path shown on Trezor matches!'
+                'div',
+                {class: 'text-center'},
+                h('button', {onClick: verifyAddress}, 'Verify on Trezor')
               )
             )
             : h(
