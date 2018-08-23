@@ -1,4 +1,5 @@
 const assert = require('assert')
+/*
 const CardanoCrypto = require('cardano-crypto.js')
 const cbor = require('cbor')
 const {
@@ -7,6 +8,7 @@ const {
   crc32,
   base58,
 } = require('cardano-crypto.js')
+*/
 
 const {generateMnemonic, decodePaperWalletMnemonic} = require('../../frontend/wallet/mnemonic')
 
@@ -31,10 +33,10 @@ describe('paper wallet decoding', function() {
 })
 
 // eslint-disable-next-line prefer-arrow-callback
-describe('aaaaa', function() {
+/*describe('aaaaa', function() {
   it('aaaaaa', async () => {
     const mnemonic =
-      'cost dash dress stove morning robust group affair stomach vacant route volume yellow salute laugh'
+'cost dash dress stove morning robust group affair stomach vacant route volume yellow salute laugh'
     const walletSecret = CardanoCrypto.walletSecretFromMnemonic(mnemonic, 2)
 
     console.log(walletSecret.toString('hex'))
@@ -69,3 +71,4 @@ describe('aaaaa', function() {
     console.log('605E4B0992E1AA56CC05CC54F4AF3BFD262CBA450AC4D640AE63FFF7')
   })
 })
+*/

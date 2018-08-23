@@ -30,11 +30,13 @@ module.exports = {
       type: 'v1',
       number: 1,
       startAddressIndex: 0x80000000,
+      defaultDerivationMode: 'hardened',
     },
     v2: {
       type: 'v2',
       number: 2,
       startAddressIndex: 0,
+      defaultDerivationMode: 'nonhardened',
     },
   },
 }

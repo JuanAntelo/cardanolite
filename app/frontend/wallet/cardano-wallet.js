@@ -25,7 +25,14 @@ function txFeeFunction(txSizeInBytes) {
 }
 
 const CardanoWallet = async (options) => {
-  const {mnemonicOrHdNodeString, config, randomSeed, network, derivationScheme} = options
+  const {
+    mnemonicOrHdNodeString,
+    config,
+    randomSeed,
+    network,
+    derivationScheme,
+    addressDerivationMode,
+  } = options
 
   const state = {
     randomSeed: randomSeed || Math.floor(Math.random() * MAX_INT32),
@@ -33,7 +40,7 @@ const CardanoWallet = async (options) => {
     overallTxCountSinceLastUtxoFetch: 0,
     derivationScheme,
     accountIndex: HARDENED_THRESHOLD,
-    addressDerivationMode: 'hardened', // temporary - use it to switch between hardened and non-hardened addresses
+    addressDerivationMode: addressDerivationMode || derivationScheme.defaultDerivationMode,
     network,
   }
 

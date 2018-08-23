@@ -8,6 +8,7 @@ const {parseTxAux} = require('./helpers/cbor-parsers')
 const NamedError = require('../helpers/NamedError')
 const {packAddress, unpackAddress} = require('./address')
 const {NETWORKS} = require('./constants')
+const debugLog = require('../helpers/debugLog')
 
 const CardanoWalletSecretCryptoProvider = (params, walletState, disableCaching = false) => {
   const state = Object.assign(walletState, {
@@ -49,6 +50,7 @@ const CardanoWalletSecretCryptoProvider = (params, walletState, disableCaching =
 
   function toActualDerivationPath(derivationPath) {
     // in derivation scheme 1 (daedalus) the address derivation ignores the "internal/external" part
+    // TODO refactor this transformation of paths to be less hacky
     if (state.derivationScheme.type === 'v1' && derivationPath.length === 3) {
       return [derivationPath[0], derivationPath[2]]
     }
@@ -168,7 +170,8 @@ const CardanoWalletSecretCryptoProvider = (params, walletState, disableCaching =
     const witnesses = await Promise.all(
       txAux.inputs.map(async (input) => {
         const derivationPath = await getDerivationPathFromAddress(input.utxo.address)
-        const xpub = deriveHdNode(derivationPath).extendedPublicKey
+        const actualDerivationPath = toActualDerivationPath(derivationPath)
+        const xpub = deriveHdNode(actualDerivationPath).extendedPublicKey
         const protocolMagic = NETWORKS[state.network].protocolMagic
 
         /*
@@ -181,7 +184,7 @@ const CardanoWalletSecretCryptoProvider = (params, walletState, disableCaching =
           Buffer.from('5820', 'hex'),
         ]).toString('hex')
 
-        const signature = await sign(`${txSignMessagePrefix}${txHash}`, derivationPath)
+        const signature = await sign(`${txSignMessagePrefix}${txHash}`, actualDerivationPath)
 
         return TxWitness(xpub, signature)
       })
@@ -190,7 +193,7 @@ const CardanoWalletSecretCryptoProvider = (params, walletState, disableCaching =
     return SignedTransactionStructured(txAux, witnesses)
   }
 
-  function getDerivationPathFromAddress(address) {
+  async function getDerivationPathFromAddress(address) {
     let derivationPath
 
     Object.keys(state.derivedAddresses).forEach((key) => {
@@ -203,7 +206,18 @@ const CardanoWalletSecretCryptoProvider = (params, walletState, disableCaching =
       return derivationPath
     }
 
-    throw Error(`Unable to do reverse lookup of address ${address}`)
+    try {
+      const hdPassphrase = await getRootHdPassphrase()
+      // todo unpack properly v2 addresses
+      const unpackedDerivationPath = unpackAddress(address, hdPassphrase).derivationPath
+
+      return unpackedDerivationPath.length === 2
+        ? [unpackedDerivationPath[0], 0, unpackedDerivationPath[1]]
+        : unpackedDerivationPath
+    } catch (e) {
+      debugLog(e)
+      throw Error(`Unable to do reverse lookup of address ${address}`)
+    }
   }
 
   return {
