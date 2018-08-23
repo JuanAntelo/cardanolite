@@ -289,6 +289,7 @@ const CardanoWallet = async (options) => {
     const childIndexEnd = childIndexBegin + config.CARDANOLITE_WALLET_ADDRESS_LIMIT
     const derivationPaths = range(childIndexBegin, childIndexEnd).map((i) => [
       HARDENED_THRESHOLD,
+      0,
       i,
     ])
 

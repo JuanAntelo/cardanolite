@@ -4,7 +4,6 @@ const CardanoCrypto = require('cardano-crypto.js')
 const pbkdf2 = require('./helpers/pbkdf2')
 const {TxWitness, SignedTransactionStructured} = require('./transaction')
 const HdNode = require('./hd-node')
-const derivePublic = require('./helpers/derivePublic')
 const {parseTxAux} = require('./helpers/cbor-parsers')
 const NamedError = require('../helpers/NamedError')
 const {packAddress, unpackAddress} = require('./address')
@@ -29,13 +28,16 @@ const CardanoWalletSecretCryptoProvider = (params, walletState, disableCaching =
   }
 
   async function deriveAddress(derivationPath, derivationMode) {
+    // in derivation scheme 1, the middle part of the derivation path is skipped
+    const actualDerivationPath = toActualDerivationPath(derivationPath)
+
     const memoKey = JSON.stringify(derivationPath)
 
     if (!state.derivedAddresses[memoKey]) {
-      const xpub = deriveXpub(derivationPath, derivationMode)
+      const xpub = deriveXpub(actualDerivationPath, derivationMode)
       const hdPassphrase = await getRootHdPassphrase()
       state.derivedAddresses[memoKey] = packAddress(
-        derivationPath,
+        actualDerivationPath,
         xpub,
         hdPassphrase,
         state.derivationScheme
@@ -43,6 +45,15 @@ const CardanoWalletSecretCryptoProvider = (params, walletState, disableCaching =
     }
 
     return state.derivedAddresses[memoKey]
+  }
+
+  function toActualDerivationPath(derivationPath) {
+    // in derivation scheme 1 (daedalus) the address derivation ignores the "internal/external" part
+    if (state.derivationScheme.type === 'v1' && derivationPath.length === 3) {
+      return [derivationPath[0], derivationPath[2]]
+    }
+
+    return derivationPath
   }
 
   async function getWalletId() {
@@ -86,16 +97,16 @@ const CardanoWalletSecretCryptoProvider = (params, walletState, disableCaching =
     const childPath = derivationPath.slice(derivationPath.length - 1, derivationPath.length)
 
     // this reduce ensures that this would work even for empty derivation path
-    return childPath.reduce(derivePublic, deriveXpub(parentPath, 'hardened'))
+    return childPath.reduce(
+      (parentXpub, childIndex) =>
+        CardanoCrypto.derivePublic(parentXpub, childIndex, state.derivationScheme.number),
+      deriveXpub(parentPath, 'hardened')
+    )
   }
 
   function deriveHdNode(derivationPath) {
     const memoKey = JSON.stringify(derivationPath)
     if (disableCaching || !state.derivedHdNodes[memoKey]) {
-      if (derivationPath.length > 2) {
-        throw Error('Address derivation path should be of length at most 2')
-      }
-
       state.derivedHdNodes[memoKey] = derivationPath.reduce(deriveChildHdNode, state.masterHdNode)
     }
 
@@ -106,7 +117,7 @@ const CardanoWalletSecretCryptoProvider = (params, walletState, disableCaching =
     const result = CardanoCrypto.derivePrivate(
       hdNode.toBuffer(),
       childIndex,
-      state.derivationScheme
+      state.derivationScheme.number
     )
 
     return HdNode({
@@ -160,6 +171,10 @@ const CardanoWalletSecretCryptoProvider = (params, walletState, disableCaching =
         const xpub = deriveHdNode(derivationPath).extendedPublicKey
         const protocolMagic = NETWORKS[state.network].protocolMagic
 
+        /*
+        * the "01" byte is a constant to denote signatures of transactions
+        * the "5820" part is the CBOR prefix for a hex string
+        */
         const txSignMessagePrefix = Buffer.concat([
           Buffer.from('01', 'hex'),
           cbor.encode(protocolMagic),
@@ -175,16 +190,20 @@ const CardanoWalletSecretCryptoProvider = (params, walletState, disableCaching =
     return SignedTransactionStructured(txAux, witnesses)
   }
 
-  async function getDerivationPathFromAddress(address) {
-    const cachedAddress = Object.values(state.derivedAddresses).find(
-      (record) => record.address === address
-    )
+  function getDerivationPathFromAddress(address) {
+    let derivationPath
 
-    if (cachedAddress) {
-      return cachedAddress.derivationPath
-    } else {
-      return unpackAddress(address, await getRootHdPassphrase()).derivationPath
+    Object.keys(state.derivedAddresses).forEach((key) => {
+      if (state.derivedAddresses[key] === address) {
+        derivationPath = JSON.parse(key)
+      }
+    })
+
+    if (derivationPath) {
+      return derivationPath
     }
+
+    throw Error(`Unable to do reverse lookup of address ${address}`)
   }
 
   return {

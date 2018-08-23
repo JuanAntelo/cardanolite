@@ -45,13 +45,14 @@ function decryptDerivationPath(addressPayload, hdPassphrase) {
 
 function packAddress(derivationPath, xpub, hdPassphrase, derivationScheme) {
   let addressPayload, addressAttributes
-  if (derivationPath.length > 0 && derivationScheme === 1) {
+  if (derivationPath.length > 0 && derivationScheme.type === 'v1') {
     addressPayload = encryptDerivationPath(derivationPath, hdPassphrase)
     addressAttributes = new Map([[1, cbor.encode(addressPayload)]])
   } else {
     addressPayload = Buffer.from([])
     addressAttributes = new Map()
   }
+
   const addressRoot = getAddressHash([
     0,
     [0, xpub],

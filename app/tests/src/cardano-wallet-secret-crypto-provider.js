@@ -1,34 +1,33 @@
 const assert = require('assert')
 const cbor = require('cbor')
 
-const {HARDENED_THRESHOLD} = require('../../frontend/wallet/constants')
+const {HARDENED_THRESHOLD, DERIVATION_SCHEMES} = require('../../frontend/wallet/constants')
 const CardanoWalletSecretCryptoProvider = require('../../frontend/wallet/cardano-wallet-secret-crypto-provider')
 const tx = require('../../frontend/wallet/transaction')
 const range = require('../../frontend/wallet/helpers/range')
-const derivePublic = require('../../frontend/wallet/helpers/derivePublic')
 const mnemonicOrHdNodeStringToWalletSecret = require('../../frontend/wallet/helpers/mnemonicOrHdNodeStringToWalletSecret')
 
 const cryptoProviderSettings = [
   {
     secret: 'cruise bike bar reopen mimic title style fence race solar million clean',
-    derivationScheme: 1,
+    derivationScheme: DERIVATION_SCHEMES.v1,
     network: 'mainnet',
   },
   {
     secret: 'logic easily waste eager injury oval sentence wine bomb embrace gossip supreme',
-    derivationScheme: 1,
+    derivationScheme: DERIVATION_SCHEMES.v1,
     network: 'mainnet',
   },
   {
     secret:
       'A859BCAD5DE4FD8DF3F3BFA24793DBA52785F9A98832300844F028FF2DD75A5FCD24F7E51D3A2A72AC85CC163759B1103EFB1D685308DCC6CD2CCE09F70C948501E949B5B7A72F1AD304F47D842733B3481F2F096CA7DDFE8E1B7C20A1ACAFBB66EE772671D4FEF6418F670E80AD44D1747A89D75A4AD386452AB5DC1ACC32B3',
-    derivationScheme: 1,
+    derivationScheme: DERIVATION_SCHEMES.v1,
     network: 'mainnet',
   },
   {
     secret:
       'cost dash dress stove morning robust group affair stomach vacant route volume yellow salute laugh',
-    derivationScheme: 2,
+    derivationScheme: DERIVATION_SCHEMES.v2,
     network: 'mainnet',
   },
 ]
@@ -37,7 +36,7 @@ const cryptoProviders = []
 const initCryptoProvider = async (settings, i) => {
   cryptoProviders[i] = CardanoWalletSecretCryptoProvider(
     {
-      derivationScheme: 1,
+      derivationScheme: settings.derivationScheme,
       walletSecret: await mnemonicOrHdNodeStringToWalletSecret(
         settings.secret,
         settings.derivationScheme
@@ -96,18 +95,6 @@ describe('secret key derivation', () => {
   })
 })
 
-describe('extended public key derivation (non hardened)', () => {
-  it('xpub derivation from private and extended public key must coincide', () => {
-    const accountHdNode = cryptoProviders[0]._deriveHdNodeFromRoot([HARDENED_THRESHOLD])
-
-    const xpubDerivedPublic = derivePublic(accountHdNode.extendedPublicKey, 1, 1)
-    const xpubDerivedPrivate = cryptoProviders[0]._deriveChildHdNode(accountHdNode, 1)
-      .extendedPublicKey
-
-    assert.equal(xpubDerivedPublic.toString('hex'), xpubDerivedPrivate.toString('hex'))
-  })
-})
-
 describe('address generation from secret key', () => {
   const expectedAddress1 = 'Ae2tdPwUPEZLdysXE34s6xRCpqSHvy5mRbrQiegSVQGQFBvkXf5pvseKuzH'
   it("should properly generate root public address (the one used as 'wallet id' in Daedalus)", async () => {
@@ -147,7 +134,7 @@ describe('address generation from secret key', () => {
   })
 })
 
-describe('wallet addresses derivation V1', () => {
+describe('wallet addresses derivation scheme V1', () => {
   const expectedWalletAddresses = [
     'DdzFFzCqrhsgeBwYfYqJojCSPquZVLVoqAWjoBXsxCE9gJ44881GzVXMverRYLBU5KeArqW3EPThfeucWj1UzBU49c2e87dkdVaVSZ3s',
     'DdzFFzCqrhssuRDi1EGGjCajnyTGqA3HVFownbkTA9M9638Ro3o8CGyZN5NFNQMaHAbhnZgevHqoCwghoq9aScHyoWptamKzwQK7RWFw',
@@ -177,6 +164,27 @@ describe('wallet addresses derivation V1', () => {
       i,
     ])
     const walletAddresses = await cryptoProviders[2].deriveAddresses(derivationPaths, 'hardened')
+    assert.equal(JSON.stringify(walletAddresses), JSON.stringify(expectedWalletAddresses))
+  })
+})
+
+describe('wallet addresses derivation scheme V2', () => {
+  const expectedWalletAddresses = [
+    'Ae2tdPwUPEZ6RUCnjGHFqi59k5WZLiv3HoCCNGCW8SYc5H9srdTzn1bec4W',
+    'Ae2tdPwUPEZ7dnds6ZyhQdmgkrDFFPSDh8jG9RAhswcXt1bRauNw5jczjpV',
+    'Ae2tdPwUPEZ8LAVy21zj4BF97iWxKCmPv12W6a18zLX3V7rZDFFVgqUBkKw',
+    'Ae2tdPwUPEZ7Ed1V5G9oBoRoK3sbgFU8b9iZY2kegf4s6228EwVLRSq9NzP',
+    'Ae2tdPwUPEYyLw6UJRKnbbudG8PJR7KfPhioRW8m1BohkFAqR44pPg6BYVZ',
+    'Ae2tdPwUPEYw9wMWUnyutGYXdpVqNStf4g3TAxiAYMyACQAWXNFvs3fZ8do',
+    'Ae2tdPwUPEZ9wMYpKKXJLAEa5JV2CKBoiFvKfuqdtDLMARkaZG9P4K7ZRjX',
+    'Ae2tdPwUPEZHAZxwzS7MrSS8nc6DXt4Nj8FvrYHXCVDkzVEjrAfVxxZEL4H',
+    'Ae2tdPwUPEYz8hGBRWCNJFm2bDuSHBbphMT32wPxALXTVPWrRCtZhSPbRen',
+    'Ae2tdPwUPEZHxx6ug6oyXREcwQ1tjBY4D2B6M7rYL9LhbAXfRPfMtm3nV4J',
+  ]
+
+  it('should derive the right sequence of addresses from the root secret key', async () => {
+    const derivationPaths = range(0, 10).map((i) => [HARDENED_THRESHOLD, 0, i])
+    const walletAddresses = await cryptoProviders[3].deriveAddresses(derivationPaths, 'hardened')
     assert.equal(JSON.stringify(walletAddresses), JSON.stringify(expectedWalletAddresses))
   })
 })

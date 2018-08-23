@@ -2,6 +2,7 @@ const assert = require('assert')
 const cbor = require('cbor')
 
 const {CardanoWallet, txFeeFunction} = require('../../frontend/wallet/cardano-wallet')
+const {DERIVATION_SCHEMES} = require('../../frontend/wallet/constants')
 const mockNetwork = require('./mock')
 
 const testSeed = 39
@@ -25,7 +26,7 @@ const unusedWalletConfig = {
   config: mockConfig1,
   randomSeed: testSeed,
   network: 'mainnet',
-  derivationScheme: 1,
+  derivationScheme: DERIVATION_SCHEMES.v1,
 }
 
 const usedWalletConfig = {
@@ -35,7 +36,7 @@ const usedWalletConfig = {
   config: mockConfig2,
   randomSeed: testSeed,
   network: 'mainnet',
-  derivationScheme: 1,
+  derivationScheme: DERIVATION_SCHEMES.v1,
 }
 
 const smallUtxosWalletConfig = {
@@ -44,7 +45,7 @@ const smallUtxosWalletConfig = {
   config: mockConfig1,
   randomSeed: testSeed,
   network: 'mainnet',
-  derivationScheme: 1,
+  derivationScheme: DERIVATION_SCHEMES.v1,
 }
 
 const wallets = {}

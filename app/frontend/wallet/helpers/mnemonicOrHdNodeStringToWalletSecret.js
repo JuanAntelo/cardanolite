@@ -12,7 +12,7 @@ const mnemonicOrHdNodeStringToWalletSecret = async (mnemonicOrHdNodeString, deri
     } else {
       mnemonic = mnemonicOrHdNodeString
     }
-    return CardanoCrypto.walletSecretFromMnemonic(mnemonic, derivationScheme)
+    return CardanoCrypto.walletSecretFromMnemonic(mnemonic, derivationScheme.number)
   } else {
     return Buffer.from(mnemonicOrHdNodeString, 'hex')
   }

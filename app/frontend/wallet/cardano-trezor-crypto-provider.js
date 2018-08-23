@@ -1,4 +1,4 @@
-const derivePublic = require('./helpers/derivePublic')
+const CardanoCrypto = require('cardano-crypto.js')
 const {packAddress, unpackAddress} = require('./address')
 const {toBip32Path} = require('./helpers/bip32')
 
@@ -129,7 +129,10 @@ const CardanoTrezorCryptoProvider = (CARDANOLITE_CONFIG, walletState) => {
     const childPath = derivationPath.slice(derivationPath.length - 1, derivationPath.length)
 
     // this reduce ensures that this would work even for empty derivation path
-    return childPath.reduce(derivePublic, await deriveXpub(parentPath, 'hardened'))
+    return childPath.reduce(
+      (parentXpub, childIndex) => CardanoCrypto(parentXpub, childIndex, 1),
+      await deriveXpub(parentPath, 'hardened')
+    )
   }
 
   function deriveHdNode(childIndex) {

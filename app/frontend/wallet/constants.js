@@ -25,4 +25,16 @@ module.exports = {
       protocolMagic: 1097911063,
     },
   },
+  DERIVATION_SCHEMES: {
+    v1: {
+      type: 'v1',
+      number: 1,
+      startAddressIndex: 0x80000000,
+    },
+    v2: {
+      type: 'v2',
+      number: 2,
+      startAddressIndex: 0,
+    },
+  },
 }

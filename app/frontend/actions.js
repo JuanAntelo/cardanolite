@@ -1,5 +1,6 @@
 const generateMnemonic = require('./wallet/mnemonic').generateMnemonic
 const CARDANOLITE_CONFIG = require('./config').CARDANOLITE_CONFIG
+const {DERIVATION_SCHEMES} = require('./wallet/constants')
 const FileSaver = require('file-saver')
 const {
   sendAddressValidator,
@@ -69,6 +70,8 @@ module.exports = ({setState, getState}) => {
               Cardano.CardanoWallet({
                 cryptoProvider: 'trezor',
                 config: CARDANOLITE_CONFIG,
+                network: 'mainnet',
+                derivationScheme: DERIVATION_SCHEMES.v1,
               })
           )
         } catch (e) {
@@ -87,6 +90,8 @@ module.exports = ({setState, getState}) => {
               cryptoProvider: 'mnemonic',
               mnemonicOrHdNodeString: secret,
               config: CARDANOLITE_CONFIG,
+              network: 'mainnet',
+              derivationScheme: DERIVATION_SCHEMES.v2,
             })
         )
         break
