@@ -37,7 +37,6 @@
   },
   "dependencies": {
     "body-parser": "^1.18.2",
-    "cardano-crypto.js": "4.0.0",
     "compression": "^1.7.2",
     "cors": "^2.8.4",
     "device": "^0.3.9",
