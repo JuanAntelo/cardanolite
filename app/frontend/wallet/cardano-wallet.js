@@ -5,16 +5,16 @@ const debugLog = require('../helpers/debugLog')
 const {generateMnemonic, validateMnemonic} = require('./mnemonic')
 const {TxInputFromUtxo, TxOutput, TxAux} = require('./transaction')
 const BlockchainExplorer = require('./blockchain-explorer')
-const CardanoMnemonicCryptoProvider = require('./cardano-mnemonic-crypto-provider')
+const CardanoWalletSecretCryptoProvider = require('./cardano-wallet-secret-crypto-provider')
 const CardanoTrezorCryptoProvider = require('./cardano-trezor-crypto-provider')
 const PseudoRandom = require('./helpers/PseudoRandom')
-const {HARDENED_THRESHOLD, MAX_INT32, txWitnessByteSize} = require('./constants')
+const {HARDENED_THRESHOLD, MAX_INT32, TX_WITNESS_SIZE_BYTES} = require('./constants')
 const shuffleArray = require('./helpers/shuffleArray')
 const range = require('./helpers/range')
 const {toBip32StringPath} = require('./helpers/bip32')
 const {parseTx} = require('./helpers/cbor-parsers')
 const CborIndefiniteLengthArray = require('./helpers/CborIndefiniteLengthArray')
-const parseMnemonicOrHdNodeString = require('./helpers/parseMnemonicOrHdNodeString')
+const mnemonicOrHdNodeStringToWalletSecret = require('./helpers/mnemonicOrHdNodeStringToWalletSecret')
 const NamedError = require('../helpers/NamedError')
 
 function txFeeFunction(txSizeInBytes) {
@@ -25,7 +25,7 @@ function txFeeFunction(txSizeInBytes) {
 }
 
 const CardanoWallet = async (options) => {
-  const {mnemonicOrHdNodeString, config, randomSeed} = options
+  const {mnemonicOrHdNodeString, config, randomSeed, network, derivationScheme} = options
 
   const state = {
     randomSeed: randomSeed || Math.floor(Math.random() * MAX_INT32),
@@ -33,6 +33,8 @@ const CardanoWallet = async (options) => {
     overallTxCountSinceLastUtxoFetch: 0,
     accountIndex: HARDENED_THRESHOLD,
     addressDerivationMode: 'hardened', // temporary - use it to switch between hardened and non-hardened addresses
+    network,
+    derivationScheme,
   }
 
   const blockchainExplorer = BlockchainExplorer(config, state)
@@ -41,8 +43,12 @@ const CardanoWallet = async (options) => {
   if (options.cryptoProvider === 'trezor') {
     cryptoProvider = CardanoTrezorCryptoProvider(config, state)
   } else if (options.cryptoProvider === 'mnemonic') {
-    cryptoProvider = CardanoMnemonicCryptoProvider(
-      await parseMnemonicOrHdNodeString(mnemonicOrHdNodeString),
+    cryptoProvider = CardanoWalletSecretCryptoProvider(
+      {
+        derivationScheme: 1,
+        walletSecret: await mnemonicOrHdNodeStringToWalletSecret(mnemonicOrHdNodeString),
+        network: 'mainnet',
+      },
       state
     )
   } else {
@@ -156,7 +162,7 @@ const CardanoWallet = async (options) => {
 
   function isUtxoProfitable(utxo) {
     const inputSize = cbor.encode(TxInputFromUtxo(utxo)).length
-    const addedCost = txFeeFunction(inputSize + txWitnessByteSize) - txFeeFunction(0)
+    const addedCost = txFeeFunction(inputSize + TX_WITNESS_SIZE_BYTES) - txFeeFunction(0)
 
     return utxo.coins > addedCost
   }
@@ -234,7 +240,7 @@ const CardanoWallet = async (options) => {
     // the 1 is there for the CBOR "tag" for an array of 3 elements
     const txAuxSize = 1 + txInputsSize + txOutputsSize + txMetaSize
 
-    const txWitnessesSize = txInputs.length * txWitnessByteSize + 1
+    const txWitnessesSize = txInputs.length * TX_WITNESS_SIZE_BYTES + 1
 
     // the 1 is there for the CBOR "tag" for an array of 2 elements
     const txSizeInBytes = 1 + txAuxSize + txWitnessesSize

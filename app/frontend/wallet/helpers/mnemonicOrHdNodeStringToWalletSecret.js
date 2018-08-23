@@ -2,7 +2,7 @@ const CardanoCrypto = require('cardano-crypto.js')
 
 const {isMnemonicInPaperWalletFormat, decodePaperWalletMnemonic} = require('../mnemonic')
 
-const parseMnemonicOrHdNodeString = async (mnemonicOrHdNodeString) => {
+const mnemonicOrHdNodeStringToWalletSecret = async (mnemonicOrHdNodeString) => {
   const isMnemonic = mnemonicOrHdNodeString.search(' ') >= 0
 
   if (isMnemonic) {
@@ -12,10 +12,10 @@ const parseMnemonicOrHdNodeString = async (mnemonicOrHdNodeString) => {
     } else {
       mnemonic = mnemonicOrHdNodeString
     }
-    return CardanoCrypto.walletSecretFromMnemonic(mnemonic)
+    return CardanoCrypto.walletSecretFromMnemonic(mnemonic, 1)
   } else {
     return Buffer.from(mnemonicOrHdNodeString, 'hex')
   }
 }
 
-module.exports = parseMnemonicOrHdNodeString
+module.exports = mnemonicOrHdNodeStringToWalletSecret

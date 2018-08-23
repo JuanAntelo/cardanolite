@@ -10,9 +10,9 @@ const {parseTxAux} = require('./helpers/cbor-parsers')
 const NamedError = require('../helpers/NamedError')
 const {packAddress, unpackAddress} = require('./address')
 
-const CardanoMnemonicCryptoProvider = (walletSecret, walletState, disableCaching = false) => {
+const CardanoWalletSecretCryptoProvider = (params, walletState, disableCaching = false) => {
   const state = Object.assign(walletState, {
-    masterHdNode: HdNode({secret: walletSecret}),
+    masterHdNode: HdNode({secret: params.walletSecret}),
     derivedHdNodes: {},
     derivedXpubs: {},
   })
@@ -174,4 +174,4 @@ const CardanoMnemonicCryptoProvider = (walletSecret, walletState, disableCaching
   }
 }
 
-module.exports = CardanoMnemonicCryptoProvider
+module.exports = CardanoWalletSecretCryptoProvider

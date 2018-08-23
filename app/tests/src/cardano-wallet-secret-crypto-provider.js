@@ -2,11 +2,11 @@ const assert = require('assert')
 const cbor = require('cbor')
 
 const {HARDENED_THRESHOLD} = require('../../frontend/wallet/constants')
-const CardanoMnemonicCryptoProvider = require('../../frontend/wallet/cardano-mnemonic-crypto-provider')
+const CardanoWalletSecretCryptoProvider = require('../../frontend/wallet/cardano-wallet-secret-crypto-provider')
 const tx = require('../../frontend/wallet/transaction')
 const range = require('../../frontend/wallet/helpers/range')
 const derivePublic = require('../../frontend/wallet/helpers/derivePublic')
-const parseMnemonicOrHdNodeString = require('../../frontend/wallet/helpers/parseMnemonicOrHdNodeString')
+const mnemonicOrHdNodeStringToWalletSecret = require('../../frontend/wallet/helpers/mnemonicOrHdNodeStringToWalletSecret')
 
 const secrets = [
   'cruise bike bar reopen mimic title style fence race solar million clean',
@@ -16,8 +16,8 @@ const secrets = [
 const cryptoProviders = []
 
 const initCryptoProvider = async (secret, i) => {
-  cryptoProviders[i] = CardanoMnemonicCryptoProvider(
-    await parseMnemonicOrHdNodeString(secret),
+  cryptoProviders[i] = CardanoWalletSecretCryptoProvider(
+    await mnemonicOrHdNodeStringToWalletSecret(secret),
     {},
     true
   )
