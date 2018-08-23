@@ -31,10 +31,10 @@ const CardanoWallet = async (options) => {
     randomSeed: randomSeed || Math.floor(Math.random() * MAX_INT32),
     ownUtxos: {},
     overallTxCountSinceLastUtxoFetch: 0,
+    derivationScheme,
     accountIndex: HARDENED_THRESHOLD,
     addressDerivationMode: 'hardened', // temporary - use it to switch between hardened and non-hardened addresses
     network,
-    derivationScheme,
   }
 
   const blockchainExplorer = BlockchainExplorer(config, state)
@@ -45,9 +45,12 @@ const CardanoWallet = async (options) => {
   } else if (options.cryptoProvider === 'mnemonic') {
     cryptoProvider = CardanoWalletSecretCryptoProvider(
       {
-        derivationScheme: 1,
-        walletSecret: await mnemonicOrHdNodeStringToWalletSecret(mnemonicOrHdNodeString),
-        network: 'mainnet',
+        walletSecret: await mnemonicOrHdNodeStringToWalletSecret(
+          mnemonicOrHdNodeString,
+          state.derivationScheme
+        ),
+        derivationScheme: state.derivationScheme,
+        network,
       },
       state
     )

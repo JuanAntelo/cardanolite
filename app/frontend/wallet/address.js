@@ -43,9 +43,9 @@ function decryptDerivationPath(addressPayload, hdPassphrase) {
   }
 }
 
-function packAddress(derivationPath, xpub, hdPassphrase) {
+function packAddress(derivationPath, xpub, hdPassphrase, derivationScheme) {
   let addressPayload, addressAttributes
-  if (derivationPath.length > 0) {
+  if (derivationPath.length > 0 && derivationScheme === 1) {
     addressPayload = encryptDerivationPath(derivationPath, hdPassphrase)
     addressAttributes = new Map([[1, cbor.encode(addressPayload)]])
   } else {

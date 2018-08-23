@@ -8,22 +8,47 @@ const range = require('../../frontend/wallet/helpers/range')
 const derivePublic = require('../../frontend/wallet/helpers/derivePublic')
 const mnemonicOrHdNodeStringToWalletSecret = require('../../frontend/wallet/helpers/mnemonicOrHdNodeStringToWalletSecret')
 
-const secrets = [
-  'cruise bike bar reopen mimic title style fence race solar million clean',
-  'logic easily waste eager injury oval sentence wine bomb embrace gossip supreme',
-  'A859BCAD5DE4FD8DF3F3BFA24793DBA52785F9A98832300844F028FF2DD75A5FCD24F7E51D3A2A72AC85CC163759B1103EFB1D685308DCC6CD2CCE09F70C948501E949B5B7A72F1AD304F47D842733B3481F2F096CA7DDFE8E1B7C20A1ACAFBB66EE772671D4FEF6418F670E80AD44D1747A89D75A4AD386452AB5DC1ACC32B3',
+const cryptoProviderSettings = [
+  {
+    secret: 'cruise bike bar reopen mimic title style fence race solar million clean',
+    derivationScheme: 1,
+    network: 'mainnet',
+  },
+  {
+    secret: 'logic easily waste eager injury oval sentence wine bomb embrace gossip supreme',
+    derivationScheme: 1,
+    network: 'mainnet',
+  },
+  {
+    secret:
+      'A859BCAD5DE4FD8DF3F3BFA24793DBA52785F9A98832300844F028FF2DD75A5FCD24F7E51D3A2A72AC85CC163759B1103EFB1D685308DCC6CD2CCE09F70C948501E949B5B7A72F1AD304F47D842733B3481F2F096CA7DDFE8E1B7C20A1ACAFBB66EE772671D4FEF6418F670E80AD44D1747A89D75A4AD386452AB5DC1ACC32B3',
+    derivationScheme: 1,
+    network: 'mainnet',
+  },
+  {
+    secret:
+      'cost dash dress stove morning robust group affair stomach vacant route volume yellow salute laugh',
+    derivationScheme: 2,
+    network: 'mainnet',
+  },
 ]
 const cryptoProviders = []
 
-const initCryptoProvider = async (secret, i) => {
+const initCryptoProvider = async (settings, i) => {
   cryptoProviders[i] = CardanoWalletSecretCryptoProvider(
-    await mnemonicOrHdNodeStringToWalletSecret(secret),
-    {},
+    {
+      derivationScheme: 1,
+      walletSecret: await mnemonicOrHdNodeStringToWalletSecret(
+        settings.secret,
+        settings.derivationScheme
+      ),
+      network: settings.network,
+    },
     true
   )
 }
 
-before(async () => await Promise.all(secrets.map(initCryptoProvider)))
+before(async () => await Promise.all(cryptoProviderSettings.map(initCryptoProvider)))
 
 const childIndex2 = 0xf9745151
 const childIndex3 = 0x10000323
@@ -75,7 +100,7 @@ describe('extended public key derivation (non hardened)', () => {
   it('xpub derivation from private and extended public key must coincide', () => {
     const accountHdNode = cryptoProviders[0]._deriveHdNodeFromRoot([HARDENED_THRESHOLD])
 
-    const xpubDerivedPublic = derivePublic(accountHdNode.extendedPublicKey, 1)
+    const xpubDerivedPublic = derivePublic(accountHdNode.extendedPublicKey, 1, 1)
     const xpubDerivedPrivate = cryptoProviders[0]._deriveChildHdNode(accountHdNode, 1)
       .extendedPublicKey
 
@@ -122,7 +147,7 @@ describe('address generation from secret key', () => {
   })
 })
 
-describe('wallet addresses derivation', () => {
+describe('wallet addresses derivation V1', () => {
   const expectedWalletAddresses = [
     'DdzFFzCqrhsgeBwYfYqJojCSPquZVLVoqAWjoBXsxCE9gJ44881GzVXMverRYLBU5KeArqW3EPThfeucWj1UzBU49c2e87dkdVaVSZ3s',
     'DdzFFzCqrhssuRDi1EGGjCajnyTGqA3HVFownbkTA9M9638Ro3o8CGyZN5NFNQMaHAbhnZgevHqoCwghoq9aScHyoWptamKzwQK7RWFw',

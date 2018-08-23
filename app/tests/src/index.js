@@ -2,7 +2,7 @@ describe('CardanoLite Test Suite', () => {
   describe('Mnemonic Handling', () => {
     require('./mnemonic')
   })
-  /*describe('CBOR', () => {
+  describe('CBOR', () => {
     require('./cbor')
   })
   describe('Mnemonic Crypto Provider', () => {
@@ -16,5 +16,5 @@ describe('CardanoLite Test Suite', () => {
   })
   describe('Import/Export Wallet as JSON', () => {
     require('./keypass-json')
-  })*/
+  })
 })

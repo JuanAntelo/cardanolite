@@ -3,18 +3,21 @@ const CardanoCrypto = require('cardano-crypto.js')
 
 const pbkdf2 = require('./helpers/pbkdf2')
 const {TxWitness, SignedTransactionStructured} = require('./transaction')
-const {TX_SIGN_MESSAGE_PREFIX, CARDANO_KEY_DERIVATION_MODE} = require('./constants')
 const HdNode = require('./hd-node')
 const derivePublic = require('./helpers/derivePublic')
 const {parseTxAux} = require('./helpers/cbor-parsers')
 const NamedError = require('../helpers/NamedError')
 const {packAddress, unpackAddress} = require('./address')
+const {NETWORKS} = require('./constants')
 
 const CardanoWalletSecretCryptoProvider = (params, walletState, disableCaching = false) => {
   const state = Object.assign(walletState, {
     masterHdNode: HdNode({secret: params.walletSecret}),
     derivedHdNodes: {},
     derivedXpubs: {},
+    derivedAddresses: {},
+    network: params.network,
+    derivationScheme: params.derivationScheme,
   })
 
   async function deriveAddresses(derivationPaths, derivationMode) {
@@ -26,10 +29,20 @@ const CardanoWalletSecretCryptoProvider = (params, walletState, disableCaching =
   }
 
   async function deriveAddress(derivationPath, derivationMode) {
-    const xpub = deriveXpub(derivationPath, derivationMode)
-    const hdPassphrase = await getRootHdPassphrase()
+    const memoKey = JSON.stringify(derivationPath)
 
-    return packAddress(derivationPath, xpub, hdPassphrase)
+    if (!state.derivedAddresses[memoKey]) {
+      const xpub = deriveXpub(derivationPath, derivationMode)
+      const hdPassphrase = await getRootHdPassphrase()
+      state.derivedAddresses[memoKey] = packAddress(
+        derivationPath,
+        xpub,
+        hdPassphrase,
+        state.derivationScheme
+      )
+    }
+
+    return state.derivedAddresses[memoKey]
   }
 
   async function getWalletId() {
@@ -93,7 +106,7 @@ const CardanoWalletSecretCryptoProvider = (params, walletState, disableCaching =
     const result = CardanoCrypto.derivePrivate(
       hdNode.toBuffer(),
       childIndex,
-      CARDANO_KEY_DERIVATION_MODE
+      state.derivationScheme
     )
 
     return HdNode({
@@ -145,7 +158,15 @@ const CardanoWalletSecretCryptoProvider = (params, walletState, disableCaching =
       txAux.inputs.map(async (input) => {
         const derivationPath = await getDerivationPathFromAddress(input.utxo.address)
         const xpub = deriveHdNode(derivationPath).extendedPublicKey
-        const signature = await sign(`${TX_SIGN_MESSAGE_PREFIX}${txHash}`, derivationPath)
+        const protocolMagic = NETWORKS[state.network].protocolMagic
+
+        const txSignMessagePrefix = Buffer.concat([
+          Buffer.from('01', 'hex'),
+          cbor.encode(protocolMagic),
+          Buffer.from('5820', 'hex'),
+        ]).toString('hex')
+
+        const signature = await sign(`${txSignMessagePrefix}${txHash}`, derivationPath)
 
         return TxWitness(xpub, signature)
       })
@@ -155,8 +176,15 @@ const CardanoWalletSecretCryptoProvider = (params, walletState, disableCaching =
   }
 
   async function getDerivationPathFromAddress(address) {
-    const hdPassphrase = await getRootHdPassphrase()
-    return unpackAddress(address, hdPassphrase).derivationPath
+    const cachedAddress = Object.values(state.derivedAddresses).find(
+      (record) => record.address === address
+    )
+
+    if (cachedAddress) {
+      return cachedAddress.derivationPath
+    } else {
+      return unpackAddress(address, await getRootHdPassphrase()).derivationPath
+    }
   }
 
   return {

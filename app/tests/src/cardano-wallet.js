@@ -24,6 +24,8 @@ const unusedWalletConfig = {
     'rain flame hip basic extend capable chair oppose gorilla fun aunt emotion',
   config: mockConfig1,
   randomSeed: testSeed,
+  network: 'mainnet',
+  derivationScheme: 1,
 }
 
 const usedWalletConfig = {
@@ -32,6 +34,8 @@ const usedWalletConfig = {
     'logic easily waste eager injury oval sentence wine bomb embrace gossip supreme',
   config: mockConfig2,
   randomSeed: testSeed,
+  network: 'mainnet',
+  derivationScheme: 1,
 }
 
 const smallUtxosWalletConfig = {
@@ -39,6 +43,8 @@ const smallUtxosWalletConfig = {
   mnemonicOrHdNodeString: 'blame matrix water coil diet seat nerve street movie turkey jump bundle',
   config: mockConfig1,
   randomSeed: testSeed,
+  network: 'mainnet',
+  derivationScheme: 1,
 }
 
 const wallets = {}
