@@ -5,42 +5,37 @@ const {HARDENED_THRESHOLD, DERIVATION_SCHEMES} = require('../../frontend/wallet/
 const CardanoWalletSecretCryptoProvider = require('../../frontend/wallet/cardano-wallet-secret-crypto-provider')
 const tx = require('../../frontend/wallet/transaction')
 const range = require('../../frontend/wallet/helpers/range')
-const mnemonicOrHdNodeStringToWalletSecret = require('../../frontend/wallet/helpers/mnemonicOrHdNodeStringToWalletSecret')
+const parseMnemonicOrHdNodeString = require('../../frontend/wallet/helpers/parseMnemonicOrHdNodeString')
 
 const cryptoProviderSettings = [
   {
     secret: 'cruise bike bar reopen mimic title style fence race solar million clean',
-    derivationScheme: DERIVATION_SCHEMES.v1,
     network: 'mainnet',
   },
   {
     secret: 'logic easily waste eager injury oval sentence wine bomb embrace gossip supreme',
-    derivationScheme: DERIVATION_SCHEMES.v1,
     network: 'mainnet',
   },
   {
     secret:
       'A859BCAD5DE4FD8DF3F3BFA24793DBA52785F9A98832300844F028FF2DD75A5FCD24F7E51D3A2A72AC85CC163759B1103EFB1D685308DCC6CD2CCE09F70C948501E949B5B7A72F1AD304F47D842733B3481F2F096CA7DDFE8E1B7C20A1ACAFBB66EE772671D4FEF6418F670E80AD44D1747A89D75A4AD386452AB5DC1ACC32B3',
-    derivationScheme: DERIVATION_SCHEMES.v1,
     network: 'mainnet',
   },
   {
     secret:
       'cost dash dress stove morning robust group affair stomach vacant route volume yellow salute laugh',
-    derivationScheme: DERIVATION_SCHEMES.v2,
     network: 'mainnet',
   },
 ]
 const cryptoProviders = []
 
 const initCryptoProvider = async (settings, i) => {
+  const parsedWalletSecret = await parseMnemonicOrHdNodeString(settings.secret)
+
   cryptoProviders[i] = CardanoWalletSecretCryptoProvider(
     {
-      derivationScheme: settings.derivationScheme,
-      walletSecret: await mnemonicOrHdNodeStringToWalletSecret(
-        settings.secret,
-        settings.derivationScheme
-      ),
+      derivationScheme: parsedWalletSecret.derivationScheme,
+      walletSecret: parsedWalletSecret.walletSecret,
       network: settings.network,
     },
     true
