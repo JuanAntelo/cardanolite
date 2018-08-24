@@ -1,7 +1,7 @@
 const assert = require('assert')
 const cbor = require('cbor')
 
-const {HARDENED_THRESHOLD, DERIVATION_SCHEMES} = require('../../frontend/wallet/constants')
+const {HARDENED_THRESHOLD} = require('../../frontend/wallet/constants')
 const CardanoWalletSecretCryptoProvider = require('../../frontend/wallet/cardano-wallet-secret-crypto-provider')
 const tx = require('../../frontend/wallet/transaction')
 const range = require('../../frontend/wallet/helpers/range')
