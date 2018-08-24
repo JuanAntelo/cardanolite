@@ -91,7 +91,7 @@ module.exports = ({setState, getState}) => {
               mnemonicOrHdNodeString: secret,
               config: CARDANOLITE_CONFIG,
               network: 'mainnet',
-              derivationScheme: DERIVATION_SCHEMES.v2,
+              // derivationScheme: DERIVATION_SCHEMES.v2,
             })
         )
         break

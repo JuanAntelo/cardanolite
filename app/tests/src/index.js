@@ -1,7 +1,4 @@
 describe('CardanoLite Test Suite', () => {
-  describe('Mnemonic Handling', () => {
-    require('./mnemonic')
-  })
   describe('CBOR', () => {
     require('./cbor')
   })

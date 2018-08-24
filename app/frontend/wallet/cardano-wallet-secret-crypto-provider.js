@@ -1,12 +1,18 @@
 const cbor = require('cbor')
-const CardanoCrypto = require('cardano-crypto.js')
+const {
+  blake2b,
+  sign: signMsg,
+  derivePublic,
+  derivePrivate,
+  xpubToHdPassphrase,
+  packAddress,
+  unpackAddress,
+} = require('cardano-crypto.js')
 
-const pbkdf2 = require('./helpers/pbkdf2')
 const {TxWitness, SignedTransactionStructured} = require('./transaction')
 const HdNode = require('./hd-node')
 const {parseTxAux} = require('./helpers/cbor-parsers')
 const NamedError = require('../helpers/NamedError')
-const {packAddress, unpackAddress} = require('./address')
 const {NETWORKS} = require('./constants')
 const debugLog = require('../helpers/debugLog')
 
@@ -41,7 +47,7 @@ const CardanoWalletSecretCryptoProvider = (params, walletState, disableCaching =
         actualDerivationPath,
         xpub,
         hdPassphrase,
-        state.derivationScheme
+        state.derivationScheme.number
       )
     }
 
@@ -66,8 +72,8 @@ const CardanoWalletSecretCryptoProvider = (params, walletState, disableCaching =
     return state.masterHdNode.toBuffer()
   }
 
-  async function getRootHdPassphrase() {
-    return await pbkdf2(state.masterHdNode.extendedPublicKey, 'address-hashing', 500, 32, 'sha512')
+  function getRootHdPassphrase() {
+    return xpubToHdPassphrase(state.masterHdNode.extendedPublicKey)
   }
 
   function deriveXpub(derivationPath, derivationMode) {
@@ -101,7 +107,7 @@ const CardanoWalletSecretCryptoProvider = (params, walletState, disableCaching =
     // this reduce ensures that this would work even for empty derivation path
     return childPath.reduce(
       (parentXpub, childIndex) =>
-        CardanoCrypto.derivePublic(parentXpub, childIndex, state.derivationScheme.number),
+        derivePublic(parentXpub, childIndex, state.derivationScheme.number),
       deriveXpub(parentPath, 'hardened')
     )
   }
@@ -116,11 +122,7 @@ const CardanoWalletSecretCryptoProvider = (params, walletState, disableCaching =
   }
 
   function deriveChildHdNode(hdNode, childIndex) {
-    const result = CardanoCrypto.derivePrivate(
-      hdNode.toBuffer(),
-      childIndex,
-      state.derivationScheme.number
-    )
+    const result = derivePrivate(hdNode.toBuffer(), childIndex, state.derivationScheme.number)
 
     return HdNode({
       secretKey: result.slice(0, 64),
@@ -133,13 +135,13 @@ const CardanoWalletSecretCryptoProvider = (params, walletState, disableCaching =
     const hdNode = await deriveHdNode(keyDerivationPath)
     const messageToSign = Buffer.from(message, 'hex')
 
-    return CardanoCrypto.sign(messageToSign, hdNode.toBuffer())
+    return signMsg(messageToSign, hdNode.toBuffer())
   }
 
   function checkTxInputsIntegrity(txInputs, rawInputTxs) {
     const inputTxs = {}
     for (const rawTx of rawInputTxs) {
-      const txHash = CardanoCrypto.blake2b(rawTx, 32).toString('hex')
+      const txHash = blake2b(rawTx, 32).toString('hex')
       inputTxs[txHash] = parseTxAux(rawTx)
     }
 
@@ -216,7 +218,7 @@ const CardanoWalletSecretCryptoProvider = (params, walletState, disableCaching =
         : unpackedDerivationPath
     } catch (e) {
       debugLog(e)
-      throw Error(`Unable to do reverse lookup of address ${address}`)
+      throw Error('Unable to get derivation path of address')
     }
   }
 

@@ -14,7 +14,7 @@ const range = require('./helpers/range')
 const {toBip32StringPath} = require('./helpers/bip32')
 const {parseTx} = require('./helpers/cbor-parsers')
 const CborIndefiniteLengthArray = require('./helpers/CborIndefiniteLengthArray')
-const mnemonicOrHdNodeStringToWalletSecret = require('./helpers/mnemonicOrHdNodeStringToWalletSecret')
+const parseMnemonicOrHdNodeString = require('./helpers/parseMnemonicOrHdNodeString')
 const NamedError = require('../helpers/NamedError')
 
 function txFeeFunction(txSizeInBytes) {
@@ -25,22 +25,13 @@ function txFeeFunction(txSizeInBytes) {
 }
 
 const CardanoWallet = async (options) => {
-  const {
-    mnemonicOrHdNodeString,
-    config,
-    randomSeed,
-    network,
-    derivationScheme,
-    addressDerivationMode,
-  } = options
+  const {mnemonicOrHdNodeString, config, randomSeed, network} = options
 
   const state = {
     randomSeed: randomSeed || Math.floor(Math.random() * MAX_INT32),
     ownUtxos: {},
     overallTxCountSinceLastUtxoFetch: 0,
-    derivationScheme,
     accountIndex: HARDENED_THRESHOLD,
-    addressDerivationMode: addressDerivationMode || derivationScheme.defaultDerivationMode,
     network,
   }
 
@@ -50,13 +41,12 @@ const CardanoWallet = async (options) => {
   if (options.cryptoProvider === 'trezor') {
     cryptoProvider = CardanoTrezorCryptoProvider(config, state)
   } else if (options.cryptoProvider === 'mnemonic') {
+    const parsedWalletSecret = await parseMnemonicOrHdNodeString(mnemonicOrHdNodeString)
+
     cryptoProvider = CardanoWalletSecretCryptoProvider(
       {
-        walletSecret: await mnemonicOrHdNodeStringToWalletSecret(
-          mnemonicOrHdNodeString,
-          state.derivationScheme
-        ),
-        derivationScheme: state.derivationScheme,
+        walletSecret: parsedWalletSecret.walletSecret,
+        derivationScheme: options.derivationScheme || parsedWalletSecret.derivationScheme,
         network,
       },
       state
@@ -64,6 +54,9 @@ const CardanoWallet = async (options) => {
   } else {
     throw new Error(`Uknown crypto provider: ${options.cryptoProvider}`)
   }
+
+  state.addressDerivationMode =
+    options.addressDerivationMode || state.derivationScheme.defaultDerivationMode
 
   await discoverOwnAddresses()
 
