@@ -285,7 +285,7 @@ const CardanoWallet = async (options) => {
   }
 
   async function discoverOwnAddresses() {
-    const childIndexBegin = state.addressDerivationMode === 'hardened' ? HARDENED_THRESHOLD : 0
+    const childIndexBegin = state.derivationScheme.startAddressIndex
     const childIndexEnd = childIndexBegin + config.CARDANOLITE_WALLET_ADDRESS_LIMIT
     const derivationPaths = range(childIndexBegin, childIndexEnd).map((i) => [
       HARDENED_THRESHOLD,
