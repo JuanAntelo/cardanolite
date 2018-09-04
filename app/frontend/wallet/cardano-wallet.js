@@ -1,5 +1,5 @@
 const cbor = require('cbor')
-const base58 = require('cardano-crypto.js').base58
+const {base58} = require('cardano-crypto.js')
 
 const debugLog = require('../helpers/debugLog')
 const {generateMnemonic, validateMnemonic} = require('./mnemonic')
@@ -14,8 +14,8 @@ const range = require('./helpers/range')
 const {toBip32StringPath} = require('./helpers/bip32')
 const {parseTx} = require('./helpers/cbor-parsers')
 const CborIndefiniteLengthArray = require('./helpers/CborIndefiniteLengthArray')
-const parseMnemonicOrHdNodeString = require('./helpers/parseMnemonicOrHdNodeString')
 const NamedError = require('../helpers/NamedError')
+const mnemonicOrHdNodeStringToWalletSecret = require('./helpers/mnemonicOrHdNodeStringToWalletSecret')
 
 function txFeeFunction(txSizeInBytes) {
   const a = 155381
@@ -41,12 +41,15 @@ const CardanoWallet = async (options) => {
   if (options.cryptoProvider === 'trezor') {
     cryptoProvider = CardanoTrezorCryptoProvider(config, state)
   } else if (options.cryptoProvider === 'mnemonic') {
-    const parsedWalletSecret = await parseMnemonicOrHdNodeString(mnemonicOrHdNodeString)
+    const {walletSecret, derivationScheme} = await mnemonicOrHdNodeStringToWalletSecret(
+      mnemonicOrHdNodeString,
+      options.derivationScheme
+    )
 
     cryptoProvider = CardanoWalletSecretCryptoProvider(
       {
-        walletSecret: parsedWalletSecret.walletSecret,
-        derivationScheme: options.derivationScheme || parsedWalletSecret.derivationScheme,
+        walletSecret,
+        derivationScheme,
         network,
       },
       state

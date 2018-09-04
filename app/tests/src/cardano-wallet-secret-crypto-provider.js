@@ -5,7 +5,7 @@ const {HARDENED_THRESHOLD} = require('../../frontend/wallet/constants')
 const CardanoWalletSecretCryptoProvider = require('../../frontend/wallet/cardano-wallet-secret-crypto-provider')
 const tx = require('../../frontend/wallet/transaction')
 const range = require('../../frontend/wallet/helpers/range')
-const parseMnemonicOrHdNodeString = require('../../frontend/wallet/helpers/parseMnemonicOrHdNodeString')
+const mnemonicOrHdNodeStringToWalletSecret = require('../../frontend/wallet/helpers/mnemonicOrHdNodeStringToWalletSecret')
 
 const cryptoProviderSettings = [
   {
@@ -30,7 +30,7 @@ const cryptoProviderSettings = [
 const cryptoProviders = []
 
 const initCryptoProvider = async (settings, i) => {
-  const parsedWalletSecret = await parseMnemonicOrHdNodeString(settings.secret)
+  const parsedWalletSecret = await mnemonicOrHdNodeStringToWalletSecret(settings.secret)
 
   cryptoProviders[i] = CardanoWalletSecretCryptoProvider(
     {
