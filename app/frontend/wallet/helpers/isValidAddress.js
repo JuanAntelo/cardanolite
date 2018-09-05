@@ -8,7 +8,9 @@ const isValidAddress = (address) => {
     const addressAsBuffer = cbor.decode(base58.decode(address))[0].value
     const addressData = cbor.decode(addressAsBuffer)
     const addressAttributes = addressData[1]
-    cbor.decode(addressAttributes.get(1))
+    if (addressAttributes[1]) {
+      cbor.decode(addressAttributes.get(1))
+    }
   } catch (e) {
     return false
   }
