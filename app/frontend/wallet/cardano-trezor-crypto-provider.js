@@ -10,10 +10,7 @@ const CardanoTrezorCryptoProvider = (CARDANOLITE_CONFIG, walletState) => {
 
   let TrezorConnect = null
   if (CARDANOLITE_CONFIG.CARDANOLITE_ENABLE_TREZOR) {
-    // eslint-disable-next-line import/no-unresolved
-    // TODO: import it from npm in production
-    window.__TREZOR_CONNECT_SRC = 'https://localhost:8088/'
-    TrezorConnect = window.TrezorConnect
+    TrezorConnect = TrezorConnect = require('trezor-connect').default
   }
 
   async function getWalletId() {
@@ -133,22 +130,25 @@ const CardanoTrezorCryptoProvider = (CARDANOLITE_CONFIG, walletState) => {
     // m/44'/1815'/0'/0/childIndex
     const path = toBip32Path(derivationPath)
 
-    const response = await TrezorConnect.cardanoGetAddress({
+    const response = await TrezorConnect.cardanoGetPublicKey({
       path,
+      showOnTrezor: true,
     })
 
-    if (response.success) {
-      const xpubData = {
-        xpub: Buffer.from(response.publicKey, 'hex'),
-        root_hd_passphrase: Buffer.from(response.rootHDPassphrase, 'hex'),
-      }
-
-      if (!state.rootHdPassphrase) {
-        state.rootHdPassphrase = xpubData.root_hd_passphrase
-      }
-    } else {
+    if (response.error) {
       throw new Error(response.error)
     }
+
+    const xpubData = {
+      xpub: Buffer.from(response.payload.publicKey, 'hex'),
+      root_hd_passphrase: Buffer.from(response.payload.hdPassphrase, 'hex'),
+    }
+
+    if (!state.rootHdPassphrase) {
+      state.rootHdPassphrase = xpubData.root_hd_passphrase
+    }
+
+    return xpubData
   }
 
   async function deriveXpubNonHardened(derivationPath) {
@@ -183,7 +183,7 @@ const CardanoTrezorCryptoProvider = (CARDANOLITE_CONFIG, walletState) => {
 
   async function getRootHdPassphrase() {
     if (!state.rootHdPassphrase) {
-      state.rootHdPassphrase = (await deriveTrezorXpub([])).root_hd_passphrase
+      state.rootHdPassphrase = (await deriveTrezorXpub([state.accountIndex])).root_hd_passphrase
     }
 
     return state.rootHdPassphrase
