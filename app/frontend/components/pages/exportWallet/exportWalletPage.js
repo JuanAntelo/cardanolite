@@ -2,7 +2,6 @@ const {h, Component} = require('preact')
 const connect = require('unistore/preact').connect
 
 const actions = require('../../../actions')
-const CloseIcon = require('../../common/svg').CloseIcon
 
 class ExportWalletDialog extends Component {
   constructor(props) {
