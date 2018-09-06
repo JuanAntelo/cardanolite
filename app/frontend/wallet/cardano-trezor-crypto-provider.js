@@ -163,18 +163,7 @@ const CardanoTrezorCryptoProvider = (CARDANOLITE_CONFIG, walletState) => {
   }
 
   async function sign(message, derivationPath) {
-    const messageToSign = Buffer.from(message, 'hex').toString('utf8')
-
-    // m/44'/1815'/0'/0/childIndex
-    const path = toBip32Path(derivationPath)
-
-    const response = await TrezorConnect.cardanoSignMessage(path, messageToSign)
-
-    if (response.success) {
-      return Buffer.from(response.signature, 'hex')
-    } else {
-      throw new Error(response.payload.error)
-    }
+    throw new Error('Not supported')
   }
 
   async function getDerivationPathFromAddress(address) {
