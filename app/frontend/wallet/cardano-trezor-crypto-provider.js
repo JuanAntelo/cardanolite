@@ -1,5 +1,6 @@
 const {packAddress, unpackAddress, derivePublic} = require('cardano-crypto.js')
 const {toBip32Path, fromBip32Path} = require('./helpers/bip32')
+const TrezorConnect = require('trezor-connect').default
 
 const CardanoTrezorCryptoProvider = (CARDANOLITE_CONFIG, walletState) => {
   const state = Object.assign(walletState, {
@@ -7,11 +8,6 @@ const CardanoTrezorCryptoProvider = (CARDANOLITE_CONFIG, walletState) => {
     rootHdPassphrase: null,
     derivedAddresses: {},
   })
-
-  let TrezorConnect = null
-  if (CARDANOLITE_CONFIG.CARDANOLITE_ENABLE_TREZOR) {
-    TrezorConnect = TrezorConnect = require('trezor-connect').default
-  }
 
   async function getWalletId() {
     return await deriveAddress([], 'hardened')
