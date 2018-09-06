@@ -1,4 +1,4 @@
-const {packAddress, unpackAddress, derivePublic} = require('cardano-crypto.js')
+const {packAddress, derivePublic} = require('cardano-crypto.js')
 const {toBip32Path, fromBip32Path} = require('./helpers/bip32')
 const TrezorConnect = require('trezor-connect').default
 
@@ -211,6 +211,20 @@ const CardanoTrezorCryptoProvider = (CARDANOLITE_CONFIG, walletState) => {
     return data
   }
 
+  function getNetworkInt(network) {
+    switch (network) {
+      case 'mainnet': {
+        return 2
+      }
+      case 'testnet': {
+        return 1
+      }
+      default: {
+        throw new Error(`Unknown network: ${network}`)
+      }
+    }
+  }
+
   async function signTx(unsignedTx, rawInputTxs) {
     const inputs = []
     for (const input of unsignedTx.inputs) {
@@ -229,6 +243,7 @@ const CardanoTrezorCryptoProvider = (CARDANOLITE_CONFIG, walletState) => {
       inputs,
       outputs,
       transactions,
+      network: getNetworkInt(state.network),
     })
 
     if (response.success) {
