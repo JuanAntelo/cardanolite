@@ -85,14 +85,8 @@ const CardanoTrezorCryptoProvider = (CARDANOLITE_CONFIG, walletState) => {
         await trezorDeriveAddress(derivationPath, true)
       } else {
         const xpub = await deriveXpub(derivationPath, derivationMode)
-        const hdPassphrase = Buffer.from(await getRootHdPassphrase(), 'hex')
 
-        const address = packAddress(
-          derivationPath,
-          xpub,
-          hdPassphrase,
-          state.derivationScheme.number
-        )
+        const address = packAddress(derivationPath, xpub, null, state.derivationScheme.number)
         state.derivedAddresses[JSON.stringify(derivationPath)] = {
           derivationPath,
           address,
@@ -142,11 +136,7 @@ const CardanoTrezorCryptoProvider = (CARDANOLITE_CONFIG, walletState) => {
 
     const xpubData = {
       xpub: Buffer.from(response.payload.publicKey, 'hex'),
-      root_hd_passphrase: Buffer.from(response.payload.hdPassphrase, 'hex'),
-    }
-
-    if (!state.rootHdPassphrase) {
-      state.rootHdPassphrase = xpubData.root_hd_passphrase
+      root_hd_passphrase: null,
     }
 
     return xpubData
@@ -187,14 +177,6 @@ const CardanoTrezorCryptoProvider = (CARDANOLITE_CONFIG, walletState) => {
     }
   }
 
-  async function getRootHdPassphrase() {
-    if (!state.rootHdPassphrase) {
-      state.rootHdPassphrase = (await deriveTrezorXpub([state.accountIndex])).root_hd_passphrase
-    }
-
-    return state.rootHdPassphrase
-  }
-
   async function getDerivationPathFromAddress(address) {
     const cachedAddress = Object.values(state.derivedAddresses).find(
       (record) => record.address === address
@@ -203,7 +185,7 @@ const CardanoTrezorCryptoProvider = (CARDANOLITE_CONFIG, walletState) => {
     if (cachedAddress) {
       return cachedAddress.derivationPath
     } else {
-      return unpackAddress(address, await getRootHdPassphrase()).derivationPath
+      throw new Error('Cannot find derivation path')
     }
   }
 
