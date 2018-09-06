@@ -91,7 +91,12 @@ const CardanoTrezorCryptoProvider = (CARDANOLITE_CONFIG, walletState) => {
         const xpub = await deriveXpub(derivationPath, derivationMode)
         const hdPassphrase = Buffer.from(await getRootHdPassphrase(), 'hex')
 
-        const address = packAddress(derivationPath, xpub, hdPassphrase, 1)
+        const address = packAddress(
+          derivationPath,
+          xpub,
+          hdPassphrase,
+          state.derivationScheme.number
+        )
         state.derivedAddresses[JSON.stringify(derivationPath)] = {
           derivationPath,
           address,
@@ -152,12 +157,17 @@ const CardanoTrezorCryptoProvider = (CARDANOLITE_CONFIG, walletState) => {
   }
 
   async function deriveXpubNonHardened(derivationPath) {
-    const parentPath = derivationPath.slice(0, derivationPath.length - 1)
-    const childPath = derivationPath.slice(derivationPath.length - 1, derivationPath.length)
+    if (derivationPath.length < 1) {
+      throw new Error('Derivation path must contain at least one indice')
+    }
+
+    const parentPath = derivationPath.slice(0, 1)
+    const childPath = derivationPath.slice(1, derivationPath.length)
 
     // this reduce ensures that this would work even for empty derivation path
     return childPath.reduce(
-      (parentXpub, childIndex) => derivePublic(parentXpub, childIndex, 1),
+      (parentXpub, childIndex) =>
+        derivePublic(parentXpub, childIndex, state.derivationScheme.number),
       await deriveXpub(parentPath, 'hardened')
     )
   }

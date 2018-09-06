@@ -71,7 +71,7 @@ module.exports = ({setState, getState}) => {
                 cryptoProvider: 'trezor',
                 config: CARDANOLITE_CONFIG,
                 network: 'mainnet',
-                derivationScheme: DERIVATION_SCHEMES.v1,
+                derivationScheme: DERIVATION_SCHEMES.v2,
               })
           )
         } catch (e) {
