@@ -103,7 +103,7 @@ module.exports = ({setState, getState}) => {
       const walletIsLoaded = true
       const ownAddressesWithMeta = await wallet.getOwnAddressesWithMeta()
       const transactionHistory = await wallet.getHistory()
-      const balance = await wallet.getBalance()
+      const balance = 1234567 //await wallet.getBalance()
       const sendAmount = {fieldValue: ''}
       const sendAddress = {fieldValue: ''}
       const sendResponse = ''
@@ -439,18 +439,6 @@ module.exports = ({setState, getState}) => {
     })
   }
 
-  const openExportJsonWalletDialog = (state) => {
-    setState({
-      showExportJsonWalletDialog: true,
-    })
-  }
-
-  const closeExportJsonWalletDialog = (state) => {
-    setState({
-      showExportJsonWalletDialog: false,
-    })
-  }
-
   const exportJsonWallet = async (state, password, walletName) => {
     const walletExport = await import(/* webpackPrefetch: true */ './wallet/keypass-json').then(
       async (KeypassJson) =>
@@ -463,7 +451,7 @@ module.exports = ({setState, getState}) => {
     FileSaver.saveAs(blob, `${walletName}.json`)
 
     setState({
-      showExportJsonWalletDialog: false,
+      showExportJsonSuccessful: true,
     })
   }
 
@@ -474,8 +462,6 @@ module.exports = ({setState, getState}) => {
     loadWallet,
     logout,
     exportJsonWallet,
-    openExportJsonWalletDialog,
-    closeExportJsonWalletDialog,
     reloadWalletInfo,
     toggleAboutOverlay,
     calculateFee,
