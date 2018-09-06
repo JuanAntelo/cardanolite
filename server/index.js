@@ -33,7 +33,6 @@ if (process.env.CARDANOLITE_ENABLE_SERVER_MOCKING_MODE === 'true') {
   require('./transactionSubmitter')(app)
 }
 
-// TODO: remove connect from here in production
 app.get('*', (req, res) => {
   return res.status(200).send(`
   <!doctype html>
@@ -43,7 +42,6 @@ app.get('*', (req, res) => {
       <title>CardanoLite Wallet</title>
       <meta charset="utf-8"/>
       <meta name="viewport" content="width=device-width, initial-scale=1">
-      <script src="https://localhost:8088/trezor-connect.js"></script>
       <script src="js/init.js"></script>
       <link rel="stylesheet" type="text/css" href="css/styles.css">
       <link rel="icon" type="image/ico" href="assets/favicon.ico">
